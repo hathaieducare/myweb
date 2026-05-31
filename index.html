@@ -3,101 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tối Ưu Lộ Trình Giao Hàng - TP.HCM</title>
+    <title>Tối Ưu Lộ Trình Giao Hàng Miễn Phí - TP.HCM</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f9; color: #333; }
-        .container { max-width: 650px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #007bff; }
-        .form-group { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
-        input[type="text"] { flex: 2; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        select { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; }
-        button { width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
-        button:hover { background-color: #218838; }
-        #result { margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 4px; display: none; }
-        .map-link { display: inline-block; margin-top: 15px; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; text-align: center; width: calc(100% - 40px); }
-        .map-link:hover { background-color: #0069d9; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f6f9; color: #333; }
+        .container { max-width: 700px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        h2 { text-align: center; color: #e83e8c; margin-top: 0; }
+        .form-group { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+        input[type="text"] { flex: 3; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; }
+        select { flex: 2; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 14px; background-color: #fff; }
+        label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 6px; color: #495057; }
+        button { width: 100%; padding: 14px; background-color: #e83e8c; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        button:hover { background-color: #d63384; }
+        #status { margin-top: 15px; padding: 12px; background: #fff3cd; color: #856404; border-radius: 6px; display: none; text-align: center; font-weight: bold; }
+        #result { margin-top: 25px; padding: 20px; background: #f8f9fa; border-radius: 8px; display: none; border-left: 5px solid #28a745; }
+        .route-step { background: white; padding: 12px; margin-bottom: 8px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .map-link { display: block; margin-top: 20px; padding: 14px; background-color: #28a745; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; text-align: center; font-size: 16px; }
+        .map-link:hover { background-color: #218838; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🚚 Tối Ưu Lộ Trình Giao Hàng</h2>
+    <h2>🚚 Tối Ưu Lộ Trình Giao Hàng Tự Do (Free API)</h2>
     
-    <label>🏠 Vị trí xuất phát (Nhà/Kho):</label>
+    <label>🏠 Điểm xuất phát (Kho/Nhà của bạn):</label>
     <div class="form-group">
-        <input type="text" id="startLocation" value="123 Lê Lợi, Bến Thành, Quận 1, Ho Chi Minh City">
+        <input type="text" id="startLocation" value="123 Lê Lợi, Bến Thành, Quận 1, Hồ Chí Minh">
     </div>
 
-    <label>📍 Danh sách 10 địa chỉ và khung giờ hẹn khách:</label>
+    <label>📍 Danh sách 10 đơn hàng hôm nay:</label>
     <div id="stopContainer"></div>
 
-    <button onclick="optimizeRoute()">⚡ TỐI ƯU ĐƯỜNG ĐI & XUẤT MAPS</button>
+    <button onclick="optimizeWithFreeAPI()">⚡ TÍNH TOÁN ĐƯỜNG ĐI THỰC TẾ</button>
+
+    <div id="status">⏳ Đang chuẩn bị dữ liệu...</div>
 
     <div id="result">
-        <h3>📌 Thứ tự di chuyển gợi ý:</h3>
+        <h3>📌 Lộ trình thực tế tối ưu nhất (Đã tính đường bộ thực tế):</h3>
         <div id="routeOrder"></div>
         <a id="mapsLink" class="map-link" target="_blank" href="#">🗺️ Mở Lộ Trình Trên Google Maps</a>
     </div>
 </div>
 
 <script>
-    // Tự động tạo 10 ô nhập liệu cho người dùng
     const container = document.getElementById('stopContainer');
     const sampleAddresses = [
-        "456 Nguyễn Thị Minh Khai, Quận 3", "789 Điện Biên Phủ, Bình Thạnh", 
-        "12 Đường 3 Tháng 2, Quận 10", "55 Nguyễn Huệ, Quận 1", 
-        "202 Cao Thắng, Quận 10", "15 Bà Huyện Thanh Quan, Quận 3", 
-        "321 Trần Hưng Đạo, Quận 5", "88 Lê Văn Sỹ, Phú Nhuận", 
-        "14 Hoàng Sa, Quận 1", "99 Nguyễn Trãi, Quận 5"
+        "456 Nguyễn Thị Minh Khai, Quận 3, Hồ Chí Minh", 
+        "789 Điện Biên Phủ, Bình Thạnh, Hồ Chí Minh", 
+        "295 An Dương Vương, Quận 5, Hồ Chí Minh", 
+        "55 Nguyễn Huệ, Quận 1, Hồ Chí Minh", 
+        "202 Cao Thắng, Quận 10, Hồ Chí Minh", 
+        "15 Bà Huyện Thanh Quan, Quận 3, Hồ Chí Minh", 
+        "321 Trần Hưng Đạo, Quận 5, Hồ Chí Minh", 
+        "88 Lê Văn Sỹ, Phú Nhuận, Hồ Chí Minh", 
+        "14 Hoàng Sa, Quận 1, Hồ Chí Minh", 
+        "163 Nguyễn Văn Cừ, Quận 5, Hồ Chí Minh"
     ];
-    const sampleTimes = ["08:00", "08:00", "09:00", "08:30", "09:30", "09:00", "08:30", "09:30", "08:00", "09:30"];
+    
+    const timeSlots = [
+        { label: "Hẹn: 08:00 - 08:30", open: 480, close: 510 },
+        { label: "Hẹn: 08:00 - 09:00", open: 480, close: 540 },
+        { label: "Hẹn: 08:30 - 09:30", open: 510, close: 570 },
+        { label: "Hẹn: 09:00 - 09:30", open: 540, close: 570 },
+        { label: "Hẹn: 09:30 - 10:00", open: 570, close: 600 },
+        { label: "Linh hoạt (Sáng)", open: 480, close: 720 }
+    ];
 
     for (let i = 1; i <= 10; i++) {
+        let optionsHtml = timeSlots.map((slot, idx) => 
+            `<option value="${slot.open}-${slot.close}" ${idx === (i % 6) ? 'selected' : ''}>${slot.label}</option>`
+        ).join('');
+
         container.innerHTML += `
             <div class="form-group">
-                <span>${i}.</span>
-                <input type="text" id="addr${i}" value="${sampleAddresses[i-1]}, Ho Chi Minh City" placeholder="Địa chỉ đơn ${i}">
-                <select id="time${i}">
-                    <option value="${sampleTimes[i-1]}" selected>Hẹn: ${sampleTimes[i-1]}</option>
-                    <option value="08:00">Hẹn: 08:00</option>
-                    <option value="08:30">Hẹn: 08:30</option>
-                    <option value="09:00">Hẹn: 09:00</option>
-                    <option value="09:30">Hẹn: 09:30</option>
-                    <option value="10:00">Hẹn: 10:00</option>
-                </select>
+                <span style="font-weight:bold; width:20px;">${i}.</span>
+                <input type="text" id="addr${i}" value="${sampleAddresses[i-1]}">
+                <select id="time${i}">${optionsHtml}</select>
             </div>
         `;
     }
 
-    function optimizeRoute() {
-        let start = document.getElementById('startLocation').value;
-        let stops = [];
-        
+    // Hàm định vị địa chỉ miễn phí không cần key
+    async function getFreeCoords(address) {
+        let url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=vn&q=${encodeURIComponent(address)}`;
+        try {
+            let res = await fetch(url);
+            let data = await res.json();
+            if (data && data.length > 0) {
+                return { lon: parseFloat(data[0].lon), lat: parseFloat(data[0].lat) };
+            }
+        } catch (e) { console.error("Lỗi định vị: ", e); }
+        return null;
+    }
+
+    // Hàm gọi ma trận đường bộ của máy chủ OSRM (Hoàn toàn miễn phí, không cần token)
+    async function getOSRMMatrix(allCoords) {
+        let coordString = allCoords.map(c => `${c.lon},${c.lat}`).join(';');
+        let url = `https://router.project-osrm.org/table/v1/driving/${coordString}?annotations=duration`;
+        let res = await fetch(url);
+        let data = await res.json();
+        return data.durations; // Trả về mảng thời gian di chuyển (giây) thực tế giữa các con đường
+    }
+
+    async function optimizeWithFreeAPI() {
+        const statusDiv = document.getElementById('status');
+        const resultDiv = document.getElementById('result');
+        statusDiv.style.display = 'block';
+        resultDiv.style.display = 'none';
+
+        let startAddr = document.getElementById('startLocation').value;
+        let addresses = [startAddr];
+        let stopsInfo = [{ id: 0, address: startAddr, openMin: 450, closeMin: 460 }];
+
         for (let i = 1; i <= 10; i++) {
             let addr = document.getElementById(`addr${i}`).value;
-            let time = document.getElementById(`time${i}`).value;
-            if (addr) stops.push({ id: i, address: addr, time: time });
+            let timeVal = document.getElementById(`time${i}`).value.split('-');
+            if (addr) {
+                addresses.push(addr);
+                stopsInfo.push({ id: i, address: addr, openMin: parseInt(timeVal[0]), closeMin: parseInt(timeVal[1]) });
+            }
         }
 
-        // Thuật toán sắp xếp ưu tiên mốc thời gian trước (Time Windows đơn giản)
-        stops.sort((a, b) => a.time.localeCompare(b.time));
+        // Bước 1: Lấy tọa độ vệ tinh các điểm
+        statusDiv.innerText = `⏳ Đang quét tọa độ địa lý các quận... Vui lòng đợi...`;
+        let allCoords = [];
+        for (let addr of addresses) {
+            let coords = await getFreeCoords(addr);
+            if (!coords) {
+                // Nếu ngõ sâu quá tìm không ra, tự động ghim tạm vị trí trung tâm TP để tránh crash app
+                allCoords.push({ lon: 106.7009, lat: 10.7769 }); 
+            } else {
+                allCoords.push(coords);
+            }
+            await new Promise(r => setTimeout(r, 300)); // Nghỉ 0.3s chống bị chặn
+        }
 
-        // Hiển thị kết quả ra màn hình
-        let resultDiv = document.getElementById('result');
+        // Bước 2: Gọi ma trận khoảng cách đường bộ từ OSRM
+        statusDiv.innerText = `⏳ Máy chủ OSRM đang tính toán đường đi thực tế...`;
+        let durationMatrix;
+        try {
+            durationMatrix = await getOSRMMatrix(allCoords);
+        } catch (e) {
+            alert("Máy chủ bản đồ đang bận, bạn vui lòng bấm lại nút tính toán sau 5 giây nhé!");
+            statusDiv.style.display = 'none';
+            return;
+        }
+
+        // Bước 3: Thuật toán tối ưu đường đi thực tế phối hợp khung giờ
+        let currentIndex = 0; 
+        let currentTime = 450; // Xuất phát lúc 7h30 sáng
+        let unvisitedIndices = Array.from({ length: stopsInfo.length - 1 }, (_, i) => i + 1);
+        let finalRoute = [];
+
+        while (unvisitedIndices.length > 0) {
+            let bestIndex = -1;
+            let bestCost = Infinity;
+
+            for (let nextIndex of unvisitedIndices) {
+                let travelTime = durationMatrix[currentIndex][nextIndex] / 60; // giây đổi sang phút
+                let arrivalTime = currentTime + travelTime;
+
+                let node = stopsInfo[nextIndex];
+                let latenessPenalty = Math.max(0, arrivalTime - node.closeMin) * 800; // Phạt nặng nếu trễ hẹn của khách
+                let waitingCost = Math.max(0, node.openMin - arrivalTime) * 1.2;
+
+                let totalCost = travelTime + latenessPenalty + waitingCost;
+
+                if (totalCost < bestCost) {
+                    bestCost = totalCost;
+                    bestIndex = nextIndex;
+                }
+            }
+
+            let finalTravelTime = durationMatrix[currentIndex][bestIndex] / 60;
+            currentTime += finalTravelTime;
+            if (currentTime < stopsInfo[bestIndex].openMin) {
+                currentTime = stopsInfo[bestIndex].openMin; 
+            }
+
+            let h = Math.floor(currentTime / 60);
+            let m = Math.floor(currentTime % 60);
+            stopsInfo[bestIndex].estimatedArrival = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+
+            currentTime += 7; // Thêm 7 phút giao hàng
+            finalRoute.push(stopsInfo[bestIndex]);
+            
+            currentIndex = bestIndex;
+            unvisitedIndices = unvisitedIndices.filter(idx => idx !== bestIndex);
+        }
+
+        // Bước 4: Hiển thị kết quả công việc
+        statusDiv.style.display = 'none';
         let orderDiv = document.getElementById('routeOrder');
-        orderDiv.innerHTML = `<p><strong>Điểm đi:</strong> ${start}</p>`;
+        orderDiv.innerHTML = `<div class="route-step" style="background:#fff3cd;">🏠 <b>Vị Trí Xuất Phát:</b> ${startAddr}</div>`;
         
-        stops.forEach((stop, index) => {
-            orderDiv.innerHTML += `<p>➡️ <strong>Bước ${index + 1}:</strong> Đơn ${stop.id} (${stop.time}) - ${stop.address}</p>`;
+        finalRoute.forEach((stop, index) => {
+            orderDiv.innerHTML += `
+                <div class="route-step">
+                    <span>➡️ <b>Chặng ${index + 1}:</b> Đơn ${stop.id} - ${stop.address}</span>
+                    <span style="color:#e83e8c; font-weight:bold;">⏱️ Tới lúc: ~${stop.estimatedArrival}</span>
+                </div>`;
         });
 
-        // Tạo chuỗi link dẫn sang Google Maps
-        let baseMapsUrl = "https://www.google.com/maps/dir/";
-        let origin = encodeURIComponent(start);
-        let destinations = stops.map(s => encodeURIComponent(s.address)).join('/');
+        // Đẩy toàn bộ chuỗi chặng sang Google Maps trên điện thoại để tài xế lên đường
+        let googleMapsUrl = "https://www.google.com/maps/dir/" + encodeURIComponent(startAddr) + "/" + 
+                            finalRoute.map(s => encodeURIComponent(s.address)).join('/');
         
-        document.getElementById('mapsLink').href = `${baseMapsUrl}${origin}/${destinations}`;
+        document.getElementById('mapsLink').href = googleMapsUrl;
         resultDiv.style.display = 'block';
         resultDiv.scrollIntoView({ behavior: 'smooth' });
     }
