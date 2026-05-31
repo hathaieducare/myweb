@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tối Ưu Lộ Trình Giao Hàng - TP.HCM</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f9; color: #333; }
+        .container { max-width: 650px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #007bff; }
+        .form-group { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        input[type="text"] { flex: 2; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        select { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; }
+        button { width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #218838; }
+        #result { margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 4px; display: none; }
+        .map-link { display: inline-block; margin-top: 15px; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; text-align: center; width: calc(100% - 40px); }
+        .map-link:hover { background-color: #0069d9; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🚚 Tối Ưu Lộ Trình Giao Hàng</h2>
+    
+    <label>🏠 Vị trí xuất phát (Nhà/Kho):</label>
+    <div class="form-group">
+        <input type="text" id="startLocation" value="123 Lê Lợi, Bến Thành, Quận 1, Ho Chi Minh City">
+    </div>
+
+    <label>📍 Danh sách 10 địa chỉ và khung giờ hẹn khách:</label>
+    <div id="stopContainer"></div>
+
+    <button onclick="optimizeRoute()">⚡ TỐI ƯU ĐƯỜNG ĐI & XUẤT MAPS</button>
+
+    <div id="result">
+        <h3>📌 Thứ tự di chuyển gợi ý:</h3>
+        <div id="routeOrder"></div>
+        <a id="mapsLink" class="map-link" target="_blank" href="#">🗺️ Mở Lộ Trình Trên Google Maps</a>
+    </div>
+</div>
+
+<script>
+    // Tự động tạo 10 ô nhập liệu cho người dùng
+    const container = document.getElementById('stopContainer');
+    const sampleAddresses = [
+        "456 Nguyễn Thị Minh Khai, Quận 3", "789 Điện Biên Phủ, Bình Thạnh", 
+        "12 Đường 3 Tháng 2, Quận 10", "55 Nguyễn Huệ, Quận 1", 
+        "202 Cao Thắng, Quận 10", "15 Bà Huyện Thanh Quan, Quận 3", 
+        "321 Trần Hưng Đạo, Quận 5", "88 Lê Văn Sỹ, Phú Nhuận", 
+        "14 Hoàng Sa, Quận 1", "99 Nguyễn Trãi, Quận 5"
+    ];
+    const sampleTimes = ["08:00", "08:00", "09:00", "08:30", "09:30", "09:00", "08:30", "09:30", "08:00", "09:30"];
+
+    for (let i = 1; i <= 10; i++) {
+        container.innerHTML += `
+            <div class="form-group">
+                <span>${i}.</span>
+                <input type="text" id="addr${i}" value="${sampleAddresses[i-1]}, Ho Chi Minh City" placeholder="Địa chỉ đơn ${i}">
+                <select id="time${i}">
+                    <option value="${sampleTimes[i-1]}" selected>Hẹn: ${sampleTimes[i-1]}</option>
+                    <option value="08:00">Hẹn: 08:00</option>
+                    <option value="08:30">Hẹn: 08:30</option>
+                    <option value="09:00">Hẹn: 09:00</option>
+                    <option value="09:30">Hẹn: 09:30</option>
+                    <option value="10:00">Hẹn: 10:00</option>
+                </select>
+            </div>
+        `;
+    }
+
+    function optimizeRoute() {
+        let start = document.getElementById('startLocation').value;
+        let stops = [];
+        
+        for (let i = 1; i <= 10; i++) {
+            let addr = document.getElementById(`addr${i}`).value;
+            let time = document.getElementById(`time${i}`).value;
+            if (addr) stops.push({ id: i, address: addr, time: time });
+        }
+
+        // Thuật toán sắp xếp ưu tiên mốc thời gian trước (Time Windows đơn giản)
+        stops.sort((a, b) => a.time.localeCompare(b.time));
+
+        // Hiển thị kết quả ra màn hình
+        let resultDiv = document.getElementById('result');
+        let orderDiv = document.getElementById('routeOrder');
+        orderDiv.innerHTML = `<p><strong>Điểm đi:</strong> ${start}</p>`;
+        
+        stops.forEach((stop, index) => {
+            orderDiv.innerHTML += `<p>➡️ <strong>Bước ${index + 1}:</strong> Đơn ${stop.id} (${stop.time}) - ${stop.address}</p>`;
+        });
+
+        // Tạo chuỗi link dẫn sang Google Maps
+        let baseMapsUrl = "https://www.google.com/maps/dir/";
+        let origin = encodeURIComponent(start);
+        let destinations = stops.map(s => encodeURIComponent(s.address)).join('/');
+        
+        document.getElementById('mapsLink').href = `${baseMapsUrl}${origin}/${destinations}`;
+        resultDiv.style.display = 'block';
+        resultDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+</body>
+</html>
